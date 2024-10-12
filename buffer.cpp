@@ -97,6 +97,7 @@ void buffer::put(std::string str) {
     ssize_t sz = size();
     byte* d = data();
     ssize_t len  = str.size();
+
     if (pos_ + len >= sz) {                
         throw std::overflow_error("insufficient buffer to store str");
     }
@@ -105,6 +106,7 @@ void buffer::put(std::string str) {
         //转成byte取最低8位
         *(d + i) = str[i];
     }
+
     __mv_block_pos(this, len);
 }
 
@@ -114,38 +116,43 @@ void buffer::put(const buffer& buf) {
 
 int buffer::get_int() {
     ssize_t pos_ = pos();
+
     if (pos_ + sz_int >= size()) {
         throw std::overflow_error("insufficient buffer available for a int");
     }
 
     byte* d = data();
     int val = 0;
-    for (int i = 0; i < sz_int; i++) {
+    for (ssize_t i = 0; i < sz_int; i++) {
         int byteval = (*(d + i)) << (i * 8);
         val += byteval; 
     }
+
     __mv_block_pos(this, sz_int);
     return val;
 }
 
 ulong buffer::get_ulong() {
     ssize_t pos_ = pos();
+
     if (pos_ + sz_ulong >= size()) {
         throw std::overflow_error("insufficient buffer available for a int");
     }
     
     byte* d = data();
     ulong val = 0;
-    for (int i = 0; i < sz_ulong; i++) {
-        ulong byteval = (*(d + i)) << (i * 8);
+    for (ssize_t i = 0; i < sz_ulong; i++) {
+        ulong byteval = ulong((*(d + i))) << (i * 8);//需要加ull，否则默认按int来左移
         val += byteval; 
     }
+
      __mv_block_pos(this, sz_ulong);
     return val;
 }
 
 std::string buffer::get_str(ssize_t len) {
     ssize_t pos_ = pos();
+
     if (pos_ + len >= size()) {
         throw std::overflow_error("insufficient buffer available for the string");
     }
@@ -155,6 +162,7 @@ std::string buffer::get_str(ssize_t len) {
     for (int i = 0; i < len; i++) {
       str += *(d + i);
     }
+
     __mv_block_pos(this, len);
     return str;
 }
@@ -164,6 +172,7 @@ byte buffer::get_byte() {
     if (pos_ >= size()) {
         throw std::overflow_error("insufficient buffer available for a byte");
     }
+
     __mv_block_pos(this, 1);
     return *data();
 }
