@@ -28,29 +28,28 @@ public:
         }
 
 private:
-void connect(bufptr buf) {
+void connect(bufptr &buf) {
         std::shared_ptr<asio_rpc_client> self(this->shared_from_this());
         asio::ip::tcp::resolver::query q(host_, port_, asio::ip::tcp::resolver::all_matching);
         //async_connect返回下一个可以连接的itor 
         resolver_.async_resolve(q,
-                               [this, self, buf](std::error_code err, asio::ip::tcp::resolver::iterator itor) {
-                                if (!err) {
-                                     asio::async_connect(socket_,itor,
-                                [this, self, buf](std::error_code err1, asio::ip::tcp::resolver::iterator itor) {
-                                if (!err1) {
-                                    std::cout << "Connected Successfully";
-                                    send(buf);
-                                }
-                                else {
-                                    std::cout << "Connected failed";
-                                }
-                                });
-                                }
+                               [self, this, buf](std::error_code err, asio::ip::tcp::resolver::iterator itor) mutable {
+                                                        asio::async_connect(socket_,itor,
+                                                        [self, buf](std::error_code err, asio::ip::tcp::resolver::iterator itor) mutable {
+                                                        if (!err) {
+                                                         std::cout << "Connected Successfully\n";
+                                                         self->send(buf);
+                                                        }
+                                                        else {
+                                                            std::cout << "Connected failed\n";
+                                                        }
+                                                        });
                                 });
 }
 //override关键词强制重写
 public:
-virtual void send(bufptr buf) {
+virtual void send(bufptr &buf) {
+       // std::cout << socket_.is_open() << std::endl;
         if (!socket_.is_open()) {
             this->connect(buf);
            //std::cout << "socket is closed!";
@@ -63,7 +62,6 @@ virtual void send(bufptr buf) {
                           });
         }
 }
-
 private:
 //把走io_svc的声明成private，传参只需传io_svc
 std::string host_;
