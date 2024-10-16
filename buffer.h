@@ -1,5 +1,5 @@
+#ifndef BUFFER_H
 #define BUFFER_H
-//#ifndef BUFFER_H
 #include <iostream>
 #include <memory>
 #include <cstring>
@@ -7,7 +7,7 @@
 namespace raft{
 
 class buffer;
-using bufptr =  std::unique_ptr<buffer>;
+using bufptr =  std::shared_ptr<buffer>;//定义成unique_ptr不好传递
 
 typedef unsigned char byte;
 #define sz_int 4
@@ -34,5 +34,5 @@ public:
     byte get_byte();
 
 };
-}//end namespace raft
-//#endif
+}//namespace raft
+#endif
