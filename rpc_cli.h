@@ -4,7 +4,7 @@
 namespace raft {
 class rpc_client {
 public:
-    virtual void send(bufptr buf) = 0;
+    virtual void send(bufptr &buf) = 0;
 };
 }//namespace raft
 #endif
