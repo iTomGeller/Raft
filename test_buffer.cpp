@@ -7,14 +7,24 @@ using namespace raft;
 static void do_test(bufptr& buf);
 
 int main() {
-    auto buf = buffer::alloc(1024);
+   /* auto buf = buffer::alloc(1024);
     do_test(buf);
 
     buf = buffer::alloc(0x8000);
     do_test(buf);
 
     buf = buffer::alloc(0x10000);
-    do_test(buf);
+    do_test(buf);*/
+    auto buf = buffer::alloc(4);
+    buf->put(123);
+    std::cout << "the size of buffer is :" << buf->size() << std::endl;
+    buf->pos(0);
+    std::cout << "the size of buffer  after replacing pos is :" << buf->size() << std::endl;
+    //std::cout << "the data ptr of buffer is :" << buf->data()[0] << std::endl;
+    std::cout << "the int data of buffer is :" << buf->get_int() << std::endl;
+    std::cout << "the size of buffer is :" << buf->size() << std::endl;
+    buf->pos(0);
+     std::cout << "the size of buffer  after replacing pos is :" << buf->size() << std::endl;
 }
 static void do_test(bufptr& buf)
 {
