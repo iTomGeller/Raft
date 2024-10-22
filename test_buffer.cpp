@@ -15,6 +15,10 @@ int main() {
 
     buf = buffer::alloc(0x10000);
     do_test(buf);*/
+    auto buf1 = buffer::alloc(1);
+    //buf->put(byte(5));
+    buf1->put(static_cast<byte>(1));
+    std::cout << "the size of buffer is :" << buf1->size() << std::endl;
     auto buf = buffer::alloc(4);
     buf->put(123);
     std::cout << "the size of buffer is :" << buf->size() << std::endl;
