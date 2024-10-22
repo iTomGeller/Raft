@@ -67,6 +67,17 @@ void buffer::pos(ssize_t p)
     __set_block_pos(this, p);
 }
 
+void buffer::put(byte b)
+{
+    if (size() - pos() < sz_byte)
+    {
+        throw std::overflow_error("insufficient buffer to store byte");
+    }
+
+    byte* d = data();
+    *d = b;
+    __mv_block_pos(this, sz_byte);
+}
 // 逆序存数据
 void buffer::put(int val)
 {
@@ -127,6 +138,19 @@ void buffer::put(std::string str)
 
 void buffer::put(const buffer &buf)
 {
+  ssize_t sz = size();
+  ssize_t p = pos();
+  ssize_t src_sz = buf.size();
+  ssize_t src_p = buf.pos();
+  if ((sz - p) < (src_sz - src_p))
+  {
+      throw std::overflow_error("insufficient buffer to hold the other buffer");
+  }
+
+  byte* d = data();
+  byte* src = buf.data();
+  ::memcpy(d, src, src_sz - src_p);
+  __mv_block_pos(this, src_sz - src_p);
 }
 
 int buffer::get_int()
@@ -201,4 +225,16 @@ byte buffer::get_byte()
 
     __mv_block_pos(this, 1);
     return *data();
+}
+
+void buffer::get_buf(bufptr& dst) {
+  ssize_t dst_size = dst->size();
+  ssize_t src_size = this->size();
+  if (pos() + dst_size > src_size) {
+    throw std::overflow_error("insufficient buffer to hold the other buffer");
+  }
+  byte* d = dst->data();
+  byte* src = data();
+  ::memcpy(d, src, dst_size);
+  __mv_block_pos(this, src_size);
 }

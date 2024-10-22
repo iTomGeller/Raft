@@ -11,8 +11,11 @@ namespace raft
     using bufptr = std::unique_ptr<buffer>; // 定义成unique_ptr不好传递
 
     typedef unsigned char byte;
-#define sz_int 4
-#define sz_ulong 8
+
+    #define sz_byte 1
+    #define sz_int 4
+    #define sz_ulong 8
+
     // pos拿来判断 d拿来取数据
     class buffer
     {
@@ -24,7 +27,8 @@ namespace raft
         // 因为是用new申请以字节为单位的内存 所以是byte
         ssize_t size() const;
         void pos(ssize_t p);
-
+        
+        void put(byte b);
         void put(int val);
         void put(ulong val);
         void put(std::string str);
@@ -34,6 +38,7 @@ namespace raft
         std::string get_str(ssize_t len);
         ulong get_ulong();
         byte get_byte();
+        void get_buf(bufptr& dst);
     };
 } // namespace raft
 #endif
