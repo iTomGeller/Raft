@@ -130,13 +130,15 @@ private:
                 if (!err) {
                     header_->pos(RPC_REQ_HEADER_SIZE - 4);
                     int data_size = header_->get_int();
-                    //std::cout << "the data size of header is :" << data_size << std::endl;
+                    std::cout << "the header size is :" << header_->size() << std::endl;
+                    std::cout << "the data size in header is :" << data_size << std::endl;
                     if (data_size < 0 || data_size > 0x1000000) {
                         this->stop();
                         return;
                     }
                     log_data = buffer::alloc(data_size);
                     if (data_size == 0) {
+                        std::cout << "oops!\n";
                         this->read_complete();
                         return;
                     }
@@ -149,8 +151,9 @@ private:
                     );
                 }
                 else {
-                    std::cout << "failed to read rpc header from socket due to error" << std::endl;
-                    this->stop();
+                  //std::cout << "bytes trans is :" << bytes_transferred << std::endl;
+                  std::cout << "failed to read rpc header from socket due to error" << std::endl;
+                  this->stop();
                 }
             }
         );
@@ -158,21 +161,48 @@ private:
     }
 private:
   void read_complete() {
-    //取int前要保证有log_data数据
-    try {
-      //std::cout << "hello world!\n";
-      log_data->pos(0);
-      std::cout << "the log data is :" << log_data->get_int() << std::endl;
-    }  catch(std::exception &e) {
-      std::cout << e.what() << std::endl;
+    header_->pos(0);
+    byte t = (byte)header_->get_byte();
+    int src = header_->get_int();
+    int dst = header_->get_int();
+    ulong term = header_->get_ulong();
+    ulong last_term = header_->get_ulong();
+    ulong last_idx = header_->get_ulong();
+    ulong commit_idx = header_->get_ulong();
+    std::cout << src << " " << dst << std::endl;
+    //header_最后存的data_size没用，因为不同data大小不一样。
+    if (log_data && header_->get_int()) {
+      std::vector<bufptr> entry;
+      while (log_data->size() > log_data->pos()) {
+        ulong term = log_data->get_ulong();
+        byte val_type = (byte)log_data->get_byte();
+        int val_size = log_data->get_int();
+        bufptr buf(buffer::alloc((size_t)val_size));
+        log_data->get_buf(buf);
+        std::cout << "the term of buffer is :" << term << std::endl;
+        std::cout << "the val_type of buffer is : " << val_type << std::endl;
+        std::cout << "the val_size of buffer is : " << val_size << std::endl;
+        std::cout << "the data of buffer is : " << buf->get_int() << std::endl;  
+      }
     }
+    else {
 
+    }
+    /*  msg_type t = (msg_type)header_->get_byte();
+        int32 src = header_->get_int();
+        int32 dst = header_->get_int();
+        ulong term = header_->get_ulong();
+        ulong last_term = header_->get_ulong();
+        ulong last_idx = header_->get_ulong();
+        ulong commit_idx = header_->get_ulong();*/
+        
   }
     void read_log_data(std::error_code err) {
         if (!err) {
           this->read_complete();
           return;
         }
+        std::cout << "the log_data size is :" << log_data->size() << std::endl;
         std::cout << "failed to read rpc log data from socket due to error" << std::endl;
         this->stop();
     }

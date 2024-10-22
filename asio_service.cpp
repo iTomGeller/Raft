@@ -16,18 +16,26 @@ int main() {
   std::shared_ptr<asio_rpc_client> cli(
       std::make_shared<asio_rpc_client>(host, port, io_svc));
 
-  bufptr buf = buffer::alloc(RPC_REQ_HEADER_SIZE + 4);
-  buf->put(1);
+  bufptr buf = buffer::alloc(RPC_REQ_HEADER_SIZE + 8 + 8 + 1);
+  buf->put(byte(1));
   buf->put(127);
   buf->put(666);
-  buf->put(1);
-  buf->put(0);
-  buf->put(0);
-  buf->put(1234);
+  buf->put(ulong(1));
+  buf->put(ulong(0));
+  buf->put(ulong(0));
+  buf->put(ulong(4));
+  buf->put(8 + 1 + 4 + 4);
+  /* ulong term = log_data->get_ulong();
+    byte val_type = (byte)log_data->get_byte();
+    int val_size = log_data->get_int();*/
+  buf->put(ulong(1));
+  buf->put(byte(1));
   buf->put(4);
-  buf->put(12345);
+  buf->put(233);
+  //buf->put(12345);
         //不加pos = 0 就会出错，因为发送的时候是从data()开始的 put会改变pos
   buf->pos(0);
+  std::cout << "the buffer size is :" << buf->size() << std::endl;
   cli->send(buf);
   io_svc.run();
 }
