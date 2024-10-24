@@ -47,6 +47,16 @@ bufptr buffer::alloc(ssize_t size)
     return buf;
 }
 
+bufptr buffer::copy(const buffer& buf)
+//是deep copy
+{
+    //size包括header 而alloc里面的参数size是不包括header的
+    bufptr other = alloc(buf.size() - buf.pos());
+    other->put(buf);
+    other->pos(0);
+    return other;
+}
+
 ssize_t buffer::pos() const
 {
     return ssize_t(__pos_of_block(this));
