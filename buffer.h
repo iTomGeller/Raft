@@ -4,17 +4,13 @@
 #include <memory>
 #include <cstring>
 
+#include "basic_types.h"
+#include "pp_util.h"
 namespace raft
 {
 
     class buffer;
     using bufptr = std::unique_ptr<buffer>; // 定义成unique_ptr不好传递
-
-    typedef unsigned char byte;
-
-    #define sz_byte 1
-    #define sz_int 4
-    #define sz_ulong 8
 
     // pos拿来判断 d拿来取数据
     class buffer
@@ -22,6 +18,8 @@ namespace raft
     public:
         // static说明是属于这个类而不是任何一个实例
         static bufptr alloc(ssize_t size);
+        static bufptr copy(const buffer& buf);
+        
         ssize_t pos() const;
         byte *data() const; // 返回data所在的起始位置
         // 因为是用new申请以字节为单位的内存 所以是byte
