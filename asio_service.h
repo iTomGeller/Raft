@@ -2,10 +2,13 @@
 #include <asio.hpp>
 #include <iostream>
 #include <memory>
+
 #include "buffer.h"
-//#include "buffer.hxx"
+#include "basic_types.h"
+#include "pp_util.h"
 #include "rpc_cli.h"
 #include "rpc_listener.h"
+
 using namespace raft;
 // request header, ulong term (8), msg_type type (1), int32 src (4), int32 dst (4), ulong last_log_term (8), ulong
 // last_log_idx (8), ulong commit_idx (8) + one int32 (4) for log data size
