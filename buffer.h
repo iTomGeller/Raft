@@ -6,6 +6,8 @@
 
 #include "basic_types.h"
 #include "pp_util.h"
+#include "ptr.h"
+
 namespace raft
 {
 
