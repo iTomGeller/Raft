@@ -1,15 +1,15 @@
-#ifndef _RAFT_SERVER_HXX_
-#define _RAFT_SERVER_HXX_
+#ifndef _RAFT_SERVER_H_
+#define _RAFT_SERVER_H_
 
 #include <shared_mutex>
 #include <unordered_map>
-#include "context.hxx"
-#include "peer.hxx"
-#include "snapshot_sync_ctx.hxx"
-#include "snapshot_sync_req.hxx"
-#include "srv_role.hxx"
+#include "context.h"
+#include "peer.h"
+#include "snapshot_sync_ctx.h"
+#include "snapshot_sync_req.h"
+#include "srv_role.h"
 
-namespace cornerstone
+namespace raft
 {
 class raft_server
 {
