@@ -2,7 +2,7 @@
 #define _STRING_FORMATTER_H_
 
 #include <cstdio>
-#include "pp_util.hxx"
+#include "pp_util.h"
 
 namespace raft
 {

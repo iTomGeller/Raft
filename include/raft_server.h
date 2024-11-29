@@ -80,6 +80,7 @@ private:
     void reconfigure(const ptr<cluster_config>& new_config);
     void become_candidate();
     void become_leader();
+    
     void become_follower();
     void enable_hb_for_peer(peer& p);
     void restart_election_timer();

@@ -62,7 +62,7 @@ protected:
     virtual void exec() = 0;
 
 private:
-    std::atomic<bool> cancelled_;
+    std::atomic<bool> cancelled_;//多线程安全
     void* impl_ctx_;
     std::function<void(void*)> impl_ctx_del_;
 };

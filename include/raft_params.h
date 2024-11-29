@@ -2,8 +2,8 @@
 #define _RAFT_PARAMS_H_
 
 #include <algorithm>
-#include "basic_types.hxx"
-#include "pp_util.hxx"
+#include "basic_types.h"
+#include "pp_util.h"
 
 namespace raft
 {

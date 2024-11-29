@@ -205,24 +205,21 @@ ulong buffer::get_ulong()
     return val;
 }
 
-std::string buffer::get_str(ssize_t len)
+const char* buffer::get_str()
 {
-    ssize_t pos_ = pos();
-
-    if (pos_ + len > size())
-    {
-        throw std::overflow_error("insufficient buffer available for the string");
-    }
 
     byte *d = data();
-    std::string str;
-    for (int i = 0; i < len; i++)
-    {
-        str += *(d + i);
+    size_t i = 0;
+    size_t p = pos();
+    size_t s = size();
+    while (* (d + i) && i < s - p) {
+      i++;
     }
-
-    __mv_block_pos(this, len);
-    return str;
+    if (i == 0 || p + i >= s) {
+      return nilptr;
+    }
+    __mv_block_pos(this, i + 1);
+    return reinterpret_cast<const char *>(d);
 }
 
 byte buffer::get_byte()
@@ -247,4 +244,40 @@ void buffer::get_buf(bufptr& dst) {
   byte* src = data();
   ::memcpy(d, src, dst_size);
   __mv_block_pos(this, src_size);
+}
+
+std::ostream& raft::operator<<(std::ostream& out, buffer& buf)
+{
+    if (!out)
+    {
+        throw std::ios::failure("bad output stream.");
+    }
+
+    out.write(reinterpret_cast<char*>(buf.data()), buf.size() - buf.pos());
+
+    if (!out)
+    {
+        throw std::ios::failure("write failed");
+    }
+
+    return out;
+}
+
+std::istream& raft::operator>>(std::istream& in, buffer& buf)
+{
+    if (!in)
+    {
+        throw std::ios::failure("bad input stream");
+    }
+
+    char* data = reinterpret_cast<char*>(buf.data());
+    int size = buf.size() - buf.pos();
+    in.read(data, size);
+
+    if (!in)
+    {
+        throw std::ios::failure("read failed");
+    }
+
+    return in;
 }

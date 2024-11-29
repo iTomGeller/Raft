@@ -35,10 +35,12 @@ namespace raft
         void put(const buffer &buf);
 
         int get_int();
-        std::string get_str(ssize_t len);
+        const char * get_str();
         ulong get_ulong();
         byte get_byte();
         void get_buf(bufptr& dst);
     };
+    std::ostream& operator<<(std::ostream& out, buffer& buf);
+    std::istream& operator>>(std::istream& in, buffer& buf);
 } // namespace raft
 #endif
