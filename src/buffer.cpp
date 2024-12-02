@@ -1,32 +1,41 @@
 #include "buffer.h"
 
-typedef unsigned int uint32;
 #define __init_block(p, s, t) \
     ((t *)(p))[0] = (t)s;     \
     ((t *)(p))[1] = 0;
 
 #define __init_small_block(p, s) __init_block(p, s, ushort);
 #define __init_big_block(p, s)  \
-    __init_block(p, s, uint32); \
-    ((uint32 *)(p))[0] |= 0x80000000;
+    __init_block(p, s, uint); \
+    ((uint *)(p))[0] |= 0x80000000;
 
-#define __is_big_block(p) (((uint32 *)(p))[0] & 0x80000000)
+#define __is_big_block(p) (((uint *)(p))[0] & 0x80000000)
 
-#define __pos_of_big_block(p) ((uint32 *)(p))[1]
+#define __pos_of_big_block(p) ((uint *)(p))[1]
 #define __pos_of_small_block(p) ((ushort *)(p))[1]
 
 #define __pos_of_block(p) (__is_big_block(p)) ? __pos_of_big_block(p) : __pos_of_small_block(p)
-#define __size_of_block(p) (__is_big_block(p)) ? ((uint32 *)(p))[0] ^ 0x80000000 : ((ushort *)(p))[0]
+#define __size_of_block(p) (__is_big_block(p)) ? ((uint *)(p))[0] ^ 0x80000000 : ((ushort *)(p))[0]
 
 #define __mv_block_pos(p, len) \
-    __is_big_block(p) ? ((uint32 *)(p))[1] += len : ((ushort *)(p))[1] += (ushort)len;
+    __is_big_block(p) ? ((uint *)(p))[1] += len : ((ushort *)(p))[1] += (ushort)len;
 
 #define __set_block_pos(p, len) \
-    __is_big_block(p) ? ((uint32 *)(p))[1] = len : ((ushort *)(p))[1] = (ushort)len;
+    __is_big_block(p) ? ((uint *)(p))[1] = len : ((ushort *)(p))[1] = (ushort)len;
 // 这里直接用pos_of_big/small_block 不然会出现运算顺序问题
-#define __data_of_block(p) __is_big_block(p) ? (byte *)(((byte *)((uint32 *)(p) + 2)) + __pos_of_big_block(p)) : (byte *)(((byte *)((ushort *)(p) + 2)) + __pos_of_small_block(p))
+#define __data_of_block(p) __is_big_block(p) ? (byte *)(((byte *)((uint *)(p) + 2)) + __pos_of_big_block(p)) : (byte *)(((byte *)((ushort *)(p) + 2)) + __pos_of_small_block(p))
+
 using namespace raft;
-bufptr buffer::alloc(ssize_t size)
+
+static void free_buffer(buffer* buf)
+{
+    if (buf != nullptr)
+    {
+        delete[] reinterpret_cast<char*>(buf);
+    }
+}
+
+bufptr buffer::alloc(size_t size)
 {
     if (size >= 0x80000000)
     {
@@ -35,13 +44,13 @@ bufptr buffer::alloc(ssize_t size)
 
     if (size >= 0x8000)
     {
-        bufptr buf(reinterpret_cast<buffer *>(new char[size + sizeof(uint32) * 2]));
+        bufptr buf(reinterpret_cast<buffer *>(new char[size + sizeof(uint) * 2]), &free_buffer);
         void *ptr = reinterpret_cast<void *>(buf.get());
         __init_big_block(ptr, size);
         return buf;
     }
 
-    bufptr buf(reinterpret_cast<buffer *>(new char[size + sizeof(ushort) * 2]));
+    bufptr buf(reinterpret_cast<buffer *>(new char[size + sizeof(ushort) * 2]), &free_buffer);
     void *ptr = reinterpret_cast<void *>(buf.get());
     __init_small_block(ptr, size);
     return buf;
@@ -57,9 +66,9 @@ bufptr buffer::copy(const buffer& buf)
     return other;
 }
 
-ssize_t buffer::pos() const
+size_t buffer::pos() const
 {
-    return ssize_t(__pos_of_block(this));
+    return size_t(__pos_of_block(this));
 }
 
 byte *buffer::data() const
@@ -67,12 +76,12 @@ byte *buffer::data() const
     return __data_of_block(this);
 }
 
-ssize_t buffer::size() const
+size_t buffer::size() const
 {
-    return (ssize_t)(__size_of_block(this));
+    return (size_t)(__size_of_block(this));
 }
 
-void buffer::pos(ssize_t p)
+void buffer::pos(size_t p)
 {
     __set_block_pos(this, p);
 }
@@ -89,17 +98,17 @@ void buffer::put(byte b)
     __mv_block_pos(this, sz_byte);
 }
 // 逆序存数据
-void buffer::put(int val)
+void buffer::put(int32 val)
 {
-    ssize_t pos_ = pos();
-    ssize_t sz = size();
+    size_t pos_ = pos();
+    size_t sz = size();
     byte *d = data();
     if (pos_ + sz_int > sz)
     {
         throw std::overflow_error("insufficient buffer to store int");
     }
 
-    for (ssize_t i = 0; i < sz_int; i++)
+    for (size_t i = 0; i < sz_int; i++)
     {
         // 转成byte取最低8位
         *(d + i) = (byte)(val >> (i * 8));
@@ -109,8 +118,8 @@ void buffer::put(int val)
 
 void buffer::put(ulong val)
 {
-    ssize_t pos_ = pos();
-    ssize_t sz = size();
+    size_t pos_ = pos();
+    size_t sz = size();
     byte *d = data();
     if (pos_ + sz_ulong > sz)
     {
@@ -125,14 +134,14 @@ void buffer::put(ulong val)
     __mv_block_pos(this, sz_ulong);
 }
 
-void buffer::put(std::string str)
+void buffer::put(const std::string& str)
 {
-    ssize_t pos_ = pos();
-    ssize_t sz = size();
+    size_t pos_ = pos();
+    size_t sz = size();
     byte *d = data();
-    ssize_t len = str.size();
+    size_t len = str.size();
 
-    if (pos_ + len > sz)
+    if (pos_ + len + 1 > sz)
     {
         throw std::overflow_error("insufficient buffer to store str");
     }
@@ -142,16 +151,16 @@ void buffer::put(std::string str)
         // 转成byte取最低8位
         *(d + i) = str[i];
     }
-
-    __mv_block_pos(this, len);
+    *(d + len) = (byte)0;
+    __mv_block_pos(this, len + 1);
 }
 
 void buffer::put(const buffer &buf)
 {
-  ssize_t sz = size();
-  ssize_t p = pos();
-  ssize_t src_sz = buf.size();
-  ssize_t src_p = buf.pos();
+  size_t sz = size();
+  size_t p = pos();
+  size_t src_sz = buf.size();
+  size_t src_p = buf.pos();
   if ((sz - p) < (src_sz - src_p))
   {
       throw std::overflow_error("insufficient buffer to hold the other buffer");
@@ -163,9 +172,10 @@ void buffer::put(const buffer &buf)
   __mv_block_pos(this, src_sz - src_p);
 }
 
-int buffer::get_int()
+
+int32 buffer::get_int()
 {
-    ssize_t pos_ = pos();
+    size_t pos_ = pos();
 
     if (pos_ + sz_int > size())
     {
@@ -173,10 +183,10 @@ int buffer::get_int()
     }
 
     byte *d = data();
-    int val = 0;
-    for (ssize_t i = 0; i < sz_int; i++)
+    int32 val = 0;
+    for (size_t i = 0; i < sz_int; i++)
     {
-        int byteval = (*(d + i)) << (i * 8);
+        int32 byteval = (*(d + i)) << (i * 8);
         val += byteval;
     }
 
@@ -186,7 +196,7 @@ int buffer::get_int()
 
 ulong buffer::get_ulong()
 {
-    ssize_t pos_ = pos();
+    size_t pos_ = pos();
 
     if (pos_ + sz_ulong > size())
     {
@@ -195,7 +205,7 @@ ulong buffer::get_ulong()
 
     byte *d = data();
     ulong val = 0;
-    for (ssize_t i = 0; i < sz_ulong; i++)
+    for (size_t i = 0; i < sz_ulong; i++)
     {
         ulong byteval = ulong((*(d + i))) << (i * 8); // 需要加ull，否则默认按int来左移
         val += byteval;
@@ -207,7 +217,6 @@ ulong buffer::get_ulong()
 
 const char* buffer::get_str()
 {
-
     byte *d = data();
     size_t i = 0;
     size_t p = pos();
@@ -224,19 +233,19 @@ const char* buffer::get_str()
 
 byte buffer::get_byte()
 {
-    ssize_t pos_ = pos();
+    size_t pos_ = pos();
     if (pos_ > size())
     {
         throw std::overflow_error("insufficient buffer available for a byte");
     }
-
+    byte val = *data();
     __mv_block_pos(this, 1);
-    return *data();
+    return val;
 }
 
-void buffer::get_buf(bufptr& dst) {
-  ssize_t dst_size = dst->size();
-  ssize_t src_size = this->size();
+void buffer::get(bufptr& dst) {
+  size_t dst_size = dst->size();
+  size_t src_size = this->size();
   if (pos() + dst_size > src_size) {
     throw std::overflow_error("insufficient buffer to hold the other buffer");
   }
