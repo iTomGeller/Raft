@@ -272,9 +272,9 @@ void test_raft_server_with_asio()
         }
     });
 
-    //client->send(msg, handler);
+    client->send(msg, handler);
 
-   /* {
+    {
         std::unique_lock<std::mutex> l(stop_test_lock1);
         stop_test_cv1.wait(l);
     }
@@ -291,7 +291,7 @@ void test_raft_server_with_asio()
     cleanup("store3");
     rmdir("store1");
     rmdir("store2");
-    rmdir("store3");*/
+    rmdir("store3");
 }
 
 void test_raft_server_with_prevote()
