@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 #define ASIO_STANDALONE 1
 #define ASIO_HAS_STD_CHRONO 1
 #if defined(__EDG_VERSION__)
@@ -258,7 +259,7 @@ private:
                     log_val_type val_type = (log_val_type)log_data_->get_byte();
                     int32 val_size = log_data_->get_int();
                     bufptr buf(buffer::alloc((size_t)val_size));
-                    log_data_->get_buf(buf);//让log_data指针前移，并将数据传到buf里面
+                    log_data_->get(buf);//让log_data指针前移，并将数据传到buf里面
                     ptr<log_entry> entry(cs_new<log_entry>(term, std::move(buf), val_type));
                     req->log_entries().push_back(entry);
                 }
@@ -791,3 +792,4 @@ ptr<rpc_listener> asio_service::create_rpc_listener(ushort listening_port, ptr<l
 {
     return cs_new<asio_rpc_listener>(impl_->io_svc_, listening_port, l);
 }
+
